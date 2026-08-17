@@ -1,0 +1,18 @@
+{
+  "comment": "Canonical list of MailerLite CUSTOM fields this form writes to. `name` and `phone` are MailerLite built-ins and are not listed here. MailerLite only supports the types text, number and date — every Yes/No answer is stored as the text 'Yes' or 'No', and committees are stored as a comma-separated text list. Run `npm run setup:mailerlite` to create any of these that don't exist yet.",
+  "fields": [
+    { "name": "Union member", "key": "union_member", "type": "text" },
+    { "name": "Union name", "key": "union_name", "type": "text" },
+    {
+      "name": "Retired union member",
+      "key": "retired_union_member",
+      "type": "text"
+    },
+    { "name": "Partner org interest", "key": "partner_org", "type": "text" },
+    { "name": "Partner org name", "key": "partner_org_name", "type": "text" },
+    { "name": "Volunteer interest", "key": "volunteer", "type": "text" },
+    { "name": "Committees", "key": "committees", "type": "text" },
+    { "name": "Form notes", "key": "notes", "type": "text" },
+    { "name": "Signup source", "key": "signup_source", "type": "text" }
+  ]
+}

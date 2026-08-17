@@ -1,0 +1,26 @@
+node_modules
+.next
+.git
+.gitignore
+design
+README.md
+AGENTS.md
+CLAUDE.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+tsconfig.tsbuildinfo
+npm-debug.log*
+.DS_Store
+
+# Secrets never enter the image — they're injected at runtime by Compose.
+.env
+.env.*
+!.env.example
+.test-tmp
+test
+e2e
+playwright.config.ts
+test-results
+playwright-report
+.next-e2e

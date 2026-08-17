@@ -1,0 +1,50 @@
+# SFRLF get-involved form.
+#
+# Values come from Compose variable substitution: locally that's the .env file
+# next to this one; in Portainer it's the stack's "Environment variables" panel.
+#
+#   docker compose up -d --build
+#
+# See the Docker section of README.md for the three Portainer deployment paths.
+
+services:
+  web:
+    build:
+      context: .
+    # Named so a Portainer web-editor stack can reference this image directly
+    # instead of building. Keep in sync if you push to a registry.
+    image: sfrlf-formsite:latest
+    container_name: sfrlf-formsite
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      # Required — Compose refuses to start if any of these are unset. With
+      # MailerLite optional, Mailgun is the only thing standing between a
+      # submission and the void, so it is not allowed to be missing by accident.
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY:?set MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:?set MAILGUN_DOMAIN}
+      NOTIFY_TO: ${NOTIFY_TO:?set NOTIFY_TO}
+      # Optional — leave MAILERLITE_API_KEY blank to run notification-only.
+      # The app then skips MailerLite entirely instead of erroring per submission.
+      MAILERLITE_API_KEY: ${MAILERLITE_API_KEY:-}
+      MAILERLITE_GROUP_ID: ${MAILERLITE_GROUP_ID:-}
+      MAILERLITE_VOLUNTEER_GROUP_ID: ${MAILERLITE_VOLUNTEER_GROUP_ID:-}
+      MAILERLITE_GROUP_NAME: ${MAILERLITE_GROUP_NAME:-Website Signups}
+      MAILGUN_REGION: ${MAILGUN_REGION:-us}
+      NOTIFY_FROM: ${NOTIFY_FROM:-}
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

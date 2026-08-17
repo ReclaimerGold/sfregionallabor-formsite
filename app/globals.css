@@ -1,26 +1,111 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Palette sampled directly from the Figma Make reference screenshots. */
+@theme {
+  --color-navy: #110158;
+  --color-navy-raised: #351c57;
+  --color-navy-line: #423173;
+  --color-gold: #f4c352;
+  --color-gold-deep: #d9a933;
+  --color-cream: #f4ecd6;
+  --color-paper: #fffdf6;
+  --color-brick: #a8322a;
+  --color-ink: #6b5a2a;
+  --color-mist: #cdc3c0;
+
+  --font-display: var(--font-bitter), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-source-serif), Georgia, "Times New Roman", serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-navy);
+    font-family: var(--font-body);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-navy);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+ * Windows High Contrast mode throws away author background-colors and
+ * box-shadows and substitutes the user's own palette. Two things in this form
+ * carry meaning through exactly those properties, so they have to be restated
+ * with system colour keywords, which forced-colors mode does honour.
+ *
+ * Covered by the `forced-colors` project in playwright.config.ts.
+ */
+@media (forced-colors: active) {
+  /*
+   * Selected pills and chips are marked only by a navy fill. Without this the
+   * chosen "Yes" renders identically to the "No" beside it.
+   */
+  /*
+   * Colour signal: fill the selected control with the OS "selected" colour.
+   *
+   * Deliberately no `color` override. Chromium paints an opaque backplate
+   * behind text in this mode, so SelectedItemText (white) would disappear
+   * against it — the label text is left as CanvasText, which the backplate
+   * guarantees is readable.
+   */
+  label:has(> input:checked) {
+    background-color: SelectedItem;
+  }
+
+  /*
+   * Belt and braces. Colour alone can't be trusted across OS themes we can't
+   * test, so the selected pill also gets a non-colour marker. Committee chips
+   * already draw their own checkmark, hence the data-pill scope.
+   */
+  label[data-pill]:has(> input:checked)::before {
+    content: "✓\00a0";
+    font-weight: 700;
+  }
+
+  /*
+   * Text inputs show focus with a ring (a box-shadow) after clearing the
+   * outline, and the ring is dropped here — leaving no focus indicator at all.
+   * !important is needed to beat Tailwind's `focus:outline-none` utility,
+   * which is more specific than an element+pseudo-class selector.
+   */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 3px solid Highlight !important;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

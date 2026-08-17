@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Alternate build dirs (NEXT_DIST_DIR) and compiled unit-test output —
+    // generated code, not ours to lint.
+    ".next-*/**",
+    ".test-tmp/**",
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 

@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Keep the template committed
+!.env.example
+
+# Compiled output from `npm run test:phone`
+.test-tmp
+
+# Playwright
+test-results
+playwright-report
+.next-e2e
