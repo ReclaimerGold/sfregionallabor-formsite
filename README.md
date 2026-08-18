@@ -261,14 +261,57 @@ point the stack at it, and set the compose path to `docker-compose.yml`.
 Portainer builds from source on deploy — `build:` works as written. Best option
 if you want redeploys to track commits.
 
-**c. Registry.** For a remote host that shouldn't build:
+**c. Registry (recommended once CI is running).** Every `v*` tag publishes an
+image to GHCR via [`.github/workflows/release.yml`](.github/workflows/release.yml):
 
-```bash
-docker build -t ghcr.io/<you>/sfrlf-formsite:latest .
-docker push ghcr.io/<you>/sfrlf-formsite:latest
+```
+ghcr.io/reclaimergold/sfregionallabor-formsite:latest
+ghcr.io/reclaimergold/sfregionallabor-formsite:0.1.0
 ```
 
-Update `image:` to match and drop `build:`.
+Cut a release with:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The workflow runs the full suite first and only pushes the image if it passes.
+
+Then in Portainer use a **Web editor** stack containing
+[`docker-compose.yml`](docker-compose.yml) with the `build:` block deleted, so
+`image:` is pulled rather than built.
+
+> **The package is private, because the repo is.** Portainer cannot pull it
+> until you give it credentials, and the failure looks like a generic
+> `manifest unknown` / `denied` error.
+>
+> In Portainer: **Registries → Add registry → Custom registry**
+> - URL: `ghcr.io`
+> - Username: your GitHub username
+> - Password: a GitHub Personal Access Token (classic) with the **`read:packages`** scope
+>
+> Create the token at GitHub → Settings → Developer settings → Personal access
+> tokens → Tokens (classic). Then pick that registry when deploying the stack.
+>
+> Alternatively make just the package public — GitHub → your profile →
+> Packages → `sfregionallabor-formsite` → Package settings → Change visibility.
+> The repo stays private; only the image becomes pullable without auth.
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to
+`main` and every pull request: lint, both typechecks, unit tests, the Playwright
+suite (Chromium, both colour projects), a production build, and a Docker image
+build. The Playwright report is uploaded as an artifact when e2e fails — it's
+the only practical way to debug a remote failure.
+
+CI runs on Node 22 to match the `node:22-alpine` base image the container ships
+on, and `playwright.config.ts` blanks the vendor API keys, so a CI run can never
+reach MailerLite or send mail through Mailgun.
+
+[`.github/workflows/release.yml`](.github/workflows/release.yml) runs the same
+checks on a `v*` tag and publishes to GHCR only if they pass.
 
 ### Running MailerLite setup in the container
 

@@ -11,9 +11,13 @@ services:
   web:
     build:
       context: .
-    # Named so a Portainer web-editor stack can reference this image directly
-    # instead of building. Keep in sync if you push to a registry.
-    image: sfrlf-formsite:latest
+    # Published by .github/workflows/release.yml on every v* tag.
+    #
+    # Locally, `build:` above wins and just tags the result under this name.
+    # In a Portainer web-editor stack, delete the `build:` block and this is
+    # pulled from GHCR instead. The package is private, so Portainer needs a
+    # ghcr.io registry entry — see the README.
+    image: ghcr.io/reclaimergold/sfregionallabor-formsite:latest
     container_name: sfrlf-formsite
     restart: unless-stopped
     ports:
