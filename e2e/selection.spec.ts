@@ -36,7 +36,17 @@ const COMMITTEES = [
 async function settle(page: Page) {
   await page.mouse.move(0, 0);
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  // The pills transition colour over 150ms (Tailwind's default). A fixed sleep
+  // shorter than that samples the colour mid-transition on a slow CI runner and
+  // reads an oklab() interpolation instead of the final rgb(), so wait for
+  // every running animation to finish instead.
   await page.waitForTimeout(120);
+  await page.evaluate(() =>
+    Promise.all(
+      document.getAnimations().map((animation) => animation.finished.catch(() => {})),
+    ),
+  );
+  await page.waitForTimeout(50);
 }
 
 /** Everything that paints this element, as one comparable string. */
