@@ -1,9 +1,12 @@
 import fieldConfig from "@/config/mailerlite-fields.json";
-import type { Submission } from "./form-schema";
 
 const API_BASE = "https://connect.mailerlite.com/api";
 const TIMEOUT_MS = 10_000;
 
+/**
+ * Every key the forms may send — MailerLite's built-ins and our custom fields
+ * alike (see config/mailerlite-fields.json and `npm run setup:mailerlite`).
+ */
 const DECLARED_KEYS = new Set(fieldConfig.fields.map((field) => field.key));
 
 export class IntegrationError extends Error {
@@ -18,7 +21,8 @@ export class IntegrationError extends Error {
   }
 }
 
-const yesNo = (value: "yes" | "no") => (value === "yes" ? "Yes" : "No");
+export const yesNo = (value: "yes" | "no") => (value === "yes" ? "Yes" : "No");
+export const yesNoBool = (value: boolean) => (value ? "Yes" : "No");
 
 /**
  * MailerLite is opt-in. No API key means the deployment simply isn't using it,
@@ -30,59 +34,47 @@ export function isMailerLiteConfigured(): boolean {
 }
 
 /**
- * MailerLite's built-in fields are `name` and `phone`; everything else must
- * exist as a custom field first (see config/mailerlite-fields.json and
- * `npm run setup:mailerlite`). Unknown keys are silently dropped by MailerLite,
- * so we assert ours are declared rather than losing data quietly.
+ * MailerLite silently drops unknown field keys, so assert ours are declared
+ * in the config rather than losing data quietly.
  */
-export function buildFields(submission: Submission): Record<string, string> {
-  const custom: Record<string, string> = {
-    union_member: yesNo(submission.unionMember),
-    union_name: submission.unionName,
-    retired_union_member: yesNo(submission.retiredUnionMember),
-    partner_org: yesNo(submission.partnerOrg),
-    partner_org_name: submission.partnerOrgName,
-    volunteer: yesNo(submission.volunteer),
-    committees: submission.committees.join(", "),
-    notes: submission.notes,
-    signup_source: "Website get-involved form",
-  };
-
-  const undeclared = Object.keys(custom).filter((key) => !DECLARED_KEYS.has(key));
+export function assertDeclaredFields(fields: Record<string, string>): void {
+  const undeclared = Object.keys(fields).filter(
+    (key) => !DECLARED_KEYS.has(key),
+  );
   if (undeclared.length > 0) {
     throw new Error(
       `MailerLite field(s) not declared in config/mailerlite-fields.json: ${undeclared.join(", ")}`,
     );
   }
-
-  return {
-    name: submission.name,
-    phone: submission.phone,
-    ...custom,
-  };
 }
 
-/** Group IDs to add this subscriber to. Volunteers optionally get a second group. */
-function resolveGroups(submission: Submission): string[] {
-  const groups = [process.env.MAILERLITE_GROUP_ID];
-  if (submission.volunteer === "yes") {
-    groups.push(process.env.MAILERLITE_VOLUNTEER_GROUP_ID);
-  }
-  return groups
-    .map((id) => id?.trim())
+/** Read group IDs from env, dropping any that are unset. */
+export function groupIdsFromEnv(...names: string[]): string[] {
+  return names
+    .map((name) => process.env[name]?.trim())
     .filter((id): id is string => Boolean(id));
 }
+
+export type SubscriberPayload = {
+  email: string;
+  fields: Record<string, string>;
+  groups: string[];
+};
 
 /**
  * Create or update the subscriber. MailerLite upserts on email: 201 for a new
  * subscriber, 200 for an existing one. Groups are additive — an existing
  * subscriber is never removed from groups they're already in.
  */
-export async function upsertSubscriber(submission: Submission): Promise<void> {
+export async function upsertSubscriber(
+  subscriber: SubscriberPayload,
+): Promise<void> {
   const apiKey = process.env.MAILERLITE_API_KEY?.trim();
   if (!apiKey) {
     throw new IntegrationError("mailerlite", "MAILERLITE_API_KEY is not set.");
   }
+
+  assertDeclaredFields(subscriber.fields);
 
   let response: Response;
   try {
@@ -94,9 +86,9 @@ export async function upsertSubscriber(submission: Submission): Promise<void> {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        email: submission.email,
-        fields: buildFields(submission),
-        groups: resolveGroups(submission),
+        email: subscriber.email,
+        fields: subscriber.fields,
+        groups: subscriber.groups,
         status: "active",
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),

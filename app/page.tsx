@@ -1,4 +1,5 @@
 import SignUpForm from "./components/SignUpForm";
+import { ShieldIcon, SiteFooter, SiteHeader } from "./components/SiteChrome";
 
 /**
  * Announcement bar copy, carried over from the Figma reference.
@@ -15,42 +16,6 @@ const ANNOUNCEMENT: { text: string; href: string; linkLabel: string } | null = {
 const BAND_MESSAGE =
   "However you want to get involved, there’s a place for you here.";
 
-function ShieldIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      className={className}
-    >
-      <path
-        d="M12 2.75 4.75 5.5v6c0 4.35 3 8.4 7.25 9.75 4.25-1.35 7.25-5.4 7.25-9.75v-6L12 2.75Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function Logo() {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gold">
-        <ShieldIcon className="h-6 w-6 text-navy" />
-      </div>
-      <div className="leading-tight">
-        <div className="font-display text-2xl font-extrabold tracking-tight text-gold">
-          SFRLF
-        </div>
-        <div className="text-[11px] tracking-[0.12em] text-cream/80 uppercase sm:text-xs">
-          Sioux Falls Regional Labor Federation
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   return (
     <>
@@ -66,17 +31,10 @@ export default function Home() {
         </div>
       )}
 
-      <header className="bg-navy">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-5">
-          <Logo />
-          <a
-            href="#get-involved"
-            className="rounded-xl bg-gold px-6 py-3 text-center font-display font-extrabold text-navy transition hover:bg-gold-deep"
-          >
-            Join SFRLF
-          </a>
-        </div>
-      </header>
+      <SiteHeader
+        current="/"
+        cta={{ href: "#get-involved", label: "Join SFRLF" }}
+      />
 
       <main className="flex-1">
         <section className="bg-navy px-5 pt-10 pb-20 text-center sm:pt-16">
@@ -126,15 +84,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="bg-navy px-5 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
-          <Logo />
-          <p className="text-sm text-mist">
-            &copy; {new Date().getFullYear()} Sioux Falls Regional Labor
-            Federation. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

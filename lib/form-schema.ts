@@ -139,13 +139,18 @@ export function normalizeDraft(input: unknown): unknown {
   return out;
 }
 
-/** Collapse a ZodError into one message per field, keyed for the UI. */
-export function toFieldErrors(error: z.ZodError): FieldErrors {
-  const errors: FieldErrors = {};
+/**
+ * Collapse a ZodError into one message per field, keyed for the UI.
+ * Generic over the field-name union so every form on the site can use it.
+ */
+export function toFieldErrors<K extends string = keyof SubmissionDraft>(
+  error: z.ZodError,
+): Partial<Record<K, string>> {
+  const errors: Partial<Record<K, string>> = {};
   for (const issue of error.issues) {
     const key = issue.path[0];
     if (typeof key === "string" && !(key in errors)) {
-      errors[key as keyof SubmissionDraft] = issue.message;
+      errors[key as K] = issue.message;
     }
   }
   return errors;

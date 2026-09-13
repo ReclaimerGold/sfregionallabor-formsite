@@ -1,7 +1,15 @@
 # SFRLF — Get Involved form
 
-Single-page sign-up site for the **Sioux Falls Regional Labor Federation**.
-A submission can go to two places:
+Sign-up site for the **Sioux Falls Regional Labor Federation**, with two forms:
+
+| Page | Form | API route |
+| --- | --- | --- |
+| `/` | Get involved — general interest, committees, partnerships | `POST /api/submit` |
+| `/cope-gotv` | COPE Get Out the Vote volunteer signup (content from the COPE GOTV signup document) | `POST /api/cope-gotv` |
+
+Both pages share a header with links between them, and both forms are built
+from the same primitives in `app/components/form-ui.tsx`, so they look and
+behave identically. A submission to either can go to two places:
 
 1. **Mailgun** — emails a notification to whoever handles follow-up, with
    `Reply-To` set to the submitter so replying reaches them directly.
@@ -37,6 +45,7 @@ See [`.env.example`](.env.example) for the annotated template.
 | `MAILERLITE_API_KEY` | no | MailerLite → Integrations → API. Leave blank to skip MailerLite entirely and run notification-only. |
 | `MAILERLITE_GROUP_ID` | strongly recommended | Group every submission joins. Left unset, subscribers are still created but land in no group — which defeats the segmentation below. It's not enforced because you need a running app (or `npm run setup:mailerlite`) to discover the ID in the first place. |
 | `MAILERLITE_VOLUNTEER_GROUP_ID` | no | Extra group when "interested in volunteering" is Yes |
+| `MAILERLITE_COPE_GROUP_ID` | no | Group for `/cope-gotv` signups. Left unset, they join `MAILERLITE_GROUP_ID` instead |
 | `MAILERLITE_GROUP_NAME` | no | Setup script creates this group if missing |
 | `MAILGUN_API_KEY` | yes | Mailgun sending API key |
 | `MAILGUN_DOMAIN` | yes | Verified sending domain, e.g. `mg.sfrlf.org` |
@@ -63,8 +72,8 @@ The segment then stays up to date automatically as new submissions arrive.
 ### MailerLite fields
 
 `name` and `phone` are MailerLite built-ins. Everything else is a custom field
-declared in [`config/mailerlite-fields.json`](config/mailerlite-fields.json)
-and created by `npm run setup:mailerlite`:
+created by `npm run setup:mailerlite`. All of them — built-in and custom — are
+declared in [`config/mailerlite-fields.json`](config/mailerlite-fields.json):
 
 | Key | Holds |
 | --- | --- |
@@ -81,6 +90,36 @@ and created by `npm run setup:mailerlite`:
 MailerLite only supports `text`, `number` and `date` field types — there is no
 boolean or multi-select — which is why Yes/No answers are stored as text and
 committees as a comma-separated list.
+
+The COPE GOTV form (`/cope-gotv`) uses the built-ins `name` (first name),
+`last_name`, `phone`, `city`, `state` and `z_i_p`, plus its own custom fields,
+all prefixed `cope_` so they never collide with the get-involved answers:
+
+| Key | Holds |
+| --- | --- |
+| `street_address` | Street address |
+| `cope_union_member` | The full answer, e.g. `Yes — my union is affiliated with the AFL-CIO` |
+| `cope_union_local` / `cope_workplace` | Only when any "Yes" was picked |
+| `cope_registered_to_vote` | `Yes` / `No` / `I'm not sure` |
+| `cope_registration_help` | `Yes` / `No` — the "have someone help me get registered" checkbox |
+| `cope_legislative_district` | Free text |
+| `cope_activities` | Comma-separated list of the ways they want to help |
+| `cope_creative_idea` / `cope_creative_idea_details` | `Yes` / `No` / blank, and the idea |
+| `cope_business`, `cope_business_name`, `cope_business_location`, `cope_business_offers` | Business / third-space answers |
+| `cope_notes` | The "anything else" answer |
+| `cope_sms_consent` | `Yes` / `No` |
+| `signup_source` | Always `Website COPE GOTV volunteer form` |
+
+The `lib/mailerlite.ts` upsert refuses to send any key not declared in
+`config/mailerlite-fields.json`, so a new answer can't be silently dropped by
+MailerLite. The built-ins are declared too: the setup script finds them
+already present and leaves them alone, but its post-check then confirms every
+key — built-in or custom — really exists in your account.
+
+MailerLite derives a field's key from its display name and splits runs of
+capitals (its own "ZIP" became `z_i_p`), so the display names in the config
+avoid all-caps words: the field shown as "Cope union member" gets the key
+`cope_union_member`. Keep that in mind if you add more.
 
 ### Phone numbers
 
@@ -115,13 +154,15 @@ that already exist and warns if one exists with an unexpected type.
 
 ## How a submission is handled
 
-`app/api/submit/route.ts`:
+Both routes hand off to `handleFormSubmission` in `lib/submit-pipeline.ts`,
+with the form-specific bits (schema, MailerLite fields and groups, notification
+rows) in `lib/forms/get-involved.ts` and `lib/forms/cope-gotv.ts`. The pipeline:
 
 1. Rate-limits by IP (5/minute per instance).
 2. Checks the honeypot field — if filled, returns success without doing
    anything, so bots get no signal.
 3. Re-validates the payload with the **same Zod schema the client uses**
-   (`lib/form-schema.ts`), so the two can't drift.
+   (`lib/form-schema.ts` / `lib/cope-schema.ts`), so the two can't drift.
 4. Calls MailerLite and Mailgun **concurrently**.
 
 **Acceptance rule:** a submission is accepted if and only if **at least one
@@ -140,9 +181,9 @@ including the case that's hard to reach live (skipped + failed → rejected).
 
 ## Keyboard accessibility
 
-The Yes/No pills and committee chips are real `<input type="radio">` /
+The pills and chips on both forms are real `<input type="radio">` /
 `<input type="checkbox">` elements that are visually hidden, with the styled
-`<label>` standing in for them. That keeps native semantics and screen-reader
+`<label>` standing in for them. They live in `app/components/form-ui.tsx`. That keeps native semantics and screen-reader
 behaviour — but it means **the focus ring has to be drawn on the label**, since
 the element that actually receives focus is a 1×1 clipped box.
 

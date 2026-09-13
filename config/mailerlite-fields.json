@@ -1,6 +1,14 @@
 {
-  "comment": "Canonical list of MailerLite CUSTOM fields this form writes to. `name` and `phone` are MailerLite built-ins and are not listed here. MailerLite only supports the types text, number and date — every Yes/No answer is stored as the text 'Yes' or 'No', and committees are stored as a comma-separated text list. Run `npm run setup:mailerlite` to create any of these that don't exist yet.",
+  "comment": "Canonical list of every MailerLite field the site's forms write to, so the upsert can refuse a key MailerLite would silently drop. The first eight are MailerLite built-ins that every account ships with; the setup script finds them already present and leaves them alone, but its post-check then verifies the keys. MailerLite derives a field's key from its display name and splits runs of capitals (its own 'ZIP' became z_i_p), so display names here deliberately avoid all-caps words. MailerLite only supports the types text, number and date: every Yes/No answer is stored as the text 'Yes' or 'No', and multi-select answers as a comma-separated text list. Fields prefixed cope_ belong to the COPE GOTV volunteer form (/cope-gotv); the rest to the get-involved form (/). Run `npm run setup:mailerlite` to create any that don't exist yet.",
   "fields": [
+    { "name": "Name", "key": "name", "type": "text" },
+    { "name": "Last name", "key": "last_name", "type": "text" },
+    { "name": "Company", "key": "company", "type": "text" },
+    { "name": "Country", "key": "country", "type": "text" },
+    { "name": "City", "key": "city", "type": "text" },
+    { "name": "Phone", "key": "phone", "type": "text" },
+    { "name": "State", "key": "state", "type": "text" },
+    { "name": "ZIP", "key": "z_i_p", "type": "text" },
     { "name": "Union member", "key": "union_member", "type": "text" },
     { "name": "Union name", "key": "union_name", "type": "text" },
     {
@@ -13,6 +21,54 @@
     { "name": "Volunteer interest", "key": "volunteer", "type": "text" },
     { "name": "Committees", "key": "committees", "type": "text" },
     { "name": "Form notes", "key": "notes", "type": "text" },
-    { "name": "Signup source", "key": "signup_source", "type": "text" }
+    { "name": "Signup source", "key": "signup_source", "type": "text" },
+    { "name": "Street address", "key": "street_address", "type": "text" },
+    { "name": "Cope union member", "key": "cope_union_member", "type": "text" },
+    { "name": "Cope union local", "key": "cope_union_local", "type": "text" },
+    { "name": "Cope workplace", "key": "cope_workplace", "type": "text" },
+    {
+      "name": "Cope registered to vote",
+      "key": "cope_registered_to_vote",
+      "type": "text"
+    },
+    {
+      "name": "Cope registration help",
+      "key": "cope_registration_help",
+      "type": "text"
+    },
+    {
+      "name": "Cope legislative district",
+      "key": "cope_legislative_district",
+      "type": "text"
+    },
+    { "name": "Cope activities", "key": "cope_activities", "type": "text" },
+    {
+      "name": "Cope creative idea",
+      "key": "cope_creative_idea",
+      "type": "text"
+    },
+    {
+      "name": "Cope creative idea details",
+      "key": "cope_creative_idea_details",
+      "type": "text"
+    },
+    { "name": "Cope business", "key": "cope_business", "type": "text" },
+    {
+      "name": "Cope business name",
+      "key": "cope_business_name",
+      "type": "text"
+    },
+    {
+      "name": "Cope business location",
+      "key": "cope_business_location",
+      "type": "text"
+    },
+    {
+      "name": "Cope business offers",
+      "key": "cope_business_offers",
+      "type": "text"
+    },
+    { "name": "Cope notes", "key": "cope_notes", "type": "text" },
+    { "name": "Cope text consent", "key": "cope_sms_consent", "type": "text" }
   ]
 }
